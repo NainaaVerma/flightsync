@@ -2,27 +2,29 @@ package com.flightsync.flightsync.service;
 
 import com.flightsync.flightsync.model.AlertRequest;
 import com.flightsync.flightsync.model.ApiResponse;
+import com.flightsync.flightsync.model.UserAlert;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Slf4j
 @Service
 public class AlertFacadeService {
 
     private final RedisService redisService;
+    private final UserAlertService userAlertService;
 
-    public AlertFacadeService(RedisService redisService) {
+    public AlertFacadeService(RedisService redisService, UserAlertService userAlertService) {
         this.redisService = redisService;
+        this.userAlertService = userAlertService;
     }
 
-    public ApiResponse<String> setAlert(AlertRequest request) {
+    public ApiResponse<UserAlert> setAlert(AlertRequest request) {
         try {
             validateRequest(request);
-            String route = buildRoute(request.getFrom(), request.getTo());
-            redisService.savePrice(route + ":threshold", request.getThreshold());
-            log.info("Alert set for route {} at threshold Rs. {}", route, request.getThreshold());
-            return ApiResponse.success("Alert set successfully for " + route
-                    + " at Rs. " + request.getThreshold(), null);
+            UserAlert alert = userAlertService.createAlert(request);
+            return ApiResponse.success("Alert created successfully", alert);
         } catch (IllegalArgumentException e) {
             log.error("Invalid alert request: {}", e.getMessage());
             return ApiResponse.error(e.getMessage());
@@ -39,7 +41,20 @@ public class AlertFacadeService {
         return ApiResponse.success("Current price fetched successfully", price);
     }
 
+    public ApiResponse<List<UserAlert>> getAlertsByEmail(String email) {
+        List<UserAlert> alerts = userAlertService.getAlertsByEmail(email);
+        return ApiResponse.success("Alerts fetched successfully", alerts);
+    }
+
+    public ApiResponse<String> deactivateAlert(Long alertId) {
+        userAlertService.deactivateAlert(alertId);
+        return ApiResponse.success("Alert deactivated successfully", null);
+    }
+
     private void validateRequest(AlertRequest request) {
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new IllegalArgumentException("Email cannot be empty");
+        }
         if (request.getFrom() == null || request.getFrom().isBlank()) {
             throw new IllegalArgumentException("Source city cannot be empty");
         }

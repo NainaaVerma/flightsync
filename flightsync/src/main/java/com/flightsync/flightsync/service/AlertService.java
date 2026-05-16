@@ -1,10 +1,9 @@
 package com.flightsync.flightsync.service;
 
+import com.flightsync.flightsync.model.UserAlert;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -12,28 +11,27 @@ import java.util.List;
 public class AlertService {
 
     private final List<NotificationService> notificationServices;
+    private final UserAlertService userAlertService;
 
-    @Value("${alert.emails}")
-    private String alertEmails;
-
-    @Value("${alert.default-threshold}")
-    private int defaultThreshold;
-
-    public AlertService(List<NotificationService> notificationServices) {
+    public AlertService(List<NotificationService> notificationServices,
+                        UserAlertService userAlertService) {
         this.notificationServices = notificationServices;
+        this.userAlertService = userAlertService;
     }
 
     public void checkAndAlert(String from, String to, int currentPrice) {
-        if (currentPrice < defaultThreshold) {
-            log.info("Price drop detected for route {} -> {}. Current price: {}, Threshold: {}",
-                    from, to, currentPrice, defaultThreshold);
+        List<UserAlert> activeAlerts = userAlertService.getActiveAlertsForRoute(from, to);
 
-            List<String> emails = Arrays.asList(alertEmails.split(","));
-            for (String email : emails) {
+        activeAlerts.forEach(alert -> {
+            if (currentPrice < alert.getThreshold()) {
+                log.info("Price drop detected for route {} -> {}. Current: Rs. {}, Threshold: Rs. {}",
+                        from, to, currentPrice, alert.getThreshold());
                 notificationServices.forEach(service ->
-                        service.sendNotification(email.trim(), from, to, currentPrice, defaultThreshold)
+                        service.sendNotification(
+                                alert.getEmail(), from, to, currentPrice, alert.getThreshold()
+                        )
                 );
             }
-        }
+        });
     }
 }
