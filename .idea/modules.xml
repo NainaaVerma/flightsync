@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.flightsync.flightsync.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.flightsync.flightsync.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.flightsync.flightsync.test.iml" filepath="$PROJECT_DIR$/.idea/modules/com.flightsync.flightsync.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/flightsync.iml" filepath="$PROJECT_DIR$/.idea/flightsync.iml" />
     </modules>
   </component>

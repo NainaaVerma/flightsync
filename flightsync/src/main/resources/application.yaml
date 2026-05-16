@@ -37,3 +37,8 @@ alert:
 flight:
   routes: ${FLIGHT_ROUTES}
   check-interval-ms: ${FLIGHT_CHECK_INTERVAL_MS:5000}
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
