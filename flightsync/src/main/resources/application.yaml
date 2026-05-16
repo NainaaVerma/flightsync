@@ -23,3 +23,7 @@ spring:
     password: ${MAIL_PASSWORD}
 alert:
   emails: ${ALERT_EMAILS}
+  default-threshold: ${ALERT_DEFAULT_THRESHOLD:6000}
+flight:
+  routes: ${FLIGHT_ROUTES}
+  check-interval-ms: ${FLIGHT_CHECK_INTERVAL_MS:5000}

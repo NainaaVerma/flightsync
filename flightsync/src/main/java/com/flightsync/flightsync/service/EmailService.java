@@ -3,9 +3,11 @@ package com.flightsync.flightsync.service;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
-public class EmailService {
+public class EmailService implements NotificationService {
 
     private final JavaMailSender mailSender;
 
@@ -13,24 +15,26 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
-    public void sendAlert(String toEmail, String from, String to, int price, int threshold) {
+    @Override
+    public void sendNotification(String toEmail, String from, String destination, int price, int threshold) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(toEmail);
-            message.setSubject("🚨 Flight Price Alert! " + from + " → " + to);
+            message.setSubject("Flight Price Alert: " + from + " to " + destination);
             message.setText(
-                    "Hey!\n\n" +
-                            "Flight price dropped!\n\n" +
-                            "Route: " + from + " → " + to + "\n" +
-                            "Current Price: ₹" + price + "\n" +
-                            "Your Threshold: ₹" + threshold + "\n\n" +
-                            "Book now before price goes up!\n\n" +
-                            "- FlightSync"
+                    "Hello,\n\n" +
+                            "A price drop has been detected for your tracked route.\n\n" +
+                            "Route: " + from + " to " + destination + "\n" +
+                            "Current Price: Rs. " + price + "\n" +
+                            "Your Threshold: Rs. " + threshold + "\n\n" +
+                            "We recommend booking at the earliest.\n\n" +
+                            "Regards,\n" +
+                            "FlightSync"
             );
             mailSender.send(message);
-            System.out.println("📧 Email sent to: " + toEmail);
+            log.info("Alert email sent successfully to: {}", toEmail);
         } catch (Exception e) {
-            System.out.println("❌ Email error: " + e.getMessage());
+            log.error("Failed to send alert email to: {}. Error: {}", toEmail, e.getMessage());
         }
     }
 }

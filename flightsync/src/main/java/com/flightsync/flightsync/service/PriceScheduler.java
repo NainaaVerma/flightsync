@@ -1,33 +1,36 @@
 package com.flightsync.flightsync.service;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
+@Slf4j
 @Service
 public class PriceScheduler {
 
     private final MockPriceGenerator priceGenerator;
     private final KafkaProducerService kafkaProducerService;
 
-    private final List<String[]> routes = List.of(
-            new String[]{"Mumbai", "Delhi"},
-            new String[]{"Bangalore", "Mumbai"},
-            new String[]{"Delhi", "Chennai"},
-            new String[]{"Hyderabad", "Kolkata"}
-    );
+    @Value("${flight.routes}")
+    private String routes;
 
-    public PriceScheduler(MockPriceGenerator priceGenerator, KafkaProducerService kafkaProducerService) {
+    public PriceScheduler(MockPriceGenerator priceGenerator,
+                          KafkaProducerService kafkaProducerService) {
         this.priceGenerator = priceGenerator;
         this.kafkaProducerService = kafkaProducerService;
     }
 
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRateString = "${flight.check-interval-ms}")
     public void checkPrices() {
-        for (String[] route : routes) {
-            int price = priceGenerator.generatePrice(route[0], route[1]);
-            System.out.println("💰 Price check -- " + route[0] + " -> " + route[1] + ": ₹" + price);
-            kafkaProducerService.sendPriceUpdate(route[0], route[1], price);
-        }
+        List<String> routeList = List.of(routes.split(","));
+        routeList.forEach(route -> {
+            String[] cities = route.split("->");
+            int price = priceGenerator.generatePrice(cities[0].trim(), cities[1].trim());
+            log.info("Price check for route {}: Rs. {}", route, price);
+            kafkaProducerService.sendPriceUpdate(cities[0].trim(), cities[1].trim(), price);
+        });
     }
 }
